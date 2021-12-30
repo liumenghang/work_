@@ -1,0 +1,82 @@
+select t4.user_id,t4.pack_price as credit_degree,
+	   (case when mod(num1,69) between 0 and 2 then '20220104'
+			 when mod(num1,69) between 3 and 5 then '20220105'
+			 when mod(num1,69) between 6 and 15 then '20220107'
+			 when mod(num1,69) between 16 and 25 then '20220108'
+			 when mod(num1,69) between 26 and 35 then '20220109'
+			 when mod(num1,69) between 36 and 45 then '20220110'
+			 when mod(num1,69) between 46 and 55 then '20220111'
+			 when mod(num1,69) between 56 and 69 then '20220112' end) as credit_end_date,
+	    '20211231' as credit_start_date
+from(
+select t3.*,row_number() over(partition by user_develop_depart_id order by open_day) as num1,
+        (case when main_pp_id=811006815 then 19
+             when main_pp_id=993037736 then 19
+             when main_pp_id=811012642 and price_plan_cd is null and price_plan_cd2 is null then 19
+             when main_pp_id=811012644 and price_plan_cd=811012894 then 29
+             when main_pp_id=811012644 and price_plan_cd=811012893 then 39
+             when main_pp_id=811012644 and price_plan_cd is null and price_plan_cd2 is null then 39
+             when main_pp_id=811013183 and price_plan_cd2=811013361 then 29
+             when main_pp_id=811013184 and price_plan_cd2=811013361 then 39
+             when main_pp_id=811013183 and price_plan_cd is null and price_plan_cd2 is null then 29
+             when main_pp_id=811013184 and price_plan_cd is null and price_plan_cd2 is null then 39
+             when main_pp_id=811012644 and price_plan_cd2=811013360 then 49
+             when main_pp_id=811012644 and price_plan_cd=811013559 and price_plan_cd2=811013361 then 39
+             when main_pp_id=811012644 and price_plan_cd=811013557 and price_plan_cd2=811013361 then 29
+			 when main_pp_id=811012644 and price_plan_cd2=811014500 then 29
+             when main_pp_id=811012642 and price_plan_cd=811013559 and price_plan_cd2 is null then 19
+             when main_pp_id=811012642 and price_plan_cd=811014546 then 29
+			 when main_pp_id=811012644 and price_plan_cd2=811015639 then 59
+             when main_pp_id=811012644 and price_plan_cd=811014547 then 39
+             when main_pp_id=811012644 and price_plan_cd=811014592 then 39
+             when main_pp_id=811012642 and price_plan_cd2=811014548 then 19
+             when main_pp_id=811012642 and price_plan_cd=811014680 then 59
+             when main_pp_id=811012644 and price_plan_cd=811014679 then 69
+             when main_pp_id=811014714 and price_plan_cd is null then 19
+             when main_pp_id=811014716 and price_plan_cd is null  then 29
+             when main_pp_id=811014715 and price_plan_cd is null  then 39
+			 when main_pp_id=993041114 then 324
+			 when main_pp_id=811012642 and price_plan_cd=811014680 then 59
+			 when main_pp_id=811014714 and price_plan_cd=811013559 then 19
+			 when main_pp_id=811014714 and price_plan_cd=811014546 then 29
+			 when main_pp_id=811014715 and price_plan_cd=811014842 then 39
+			 when main_pp_id=811014714 and price_plan_cd=811014680 then 59
+			 when main_pp_id=811014715 and price_plan_cd=811015634 then 69
+			 when main_pp_id=811014714 and price_plan_cd=811014548 then 19
+			 else 39 end) as pack_price
+from(
+    select t1.*,t2.price_plan_cd,t5.price_plan_cd as price_plan_cd2
+    from(
+        select distinct user_id,main_pp_id,user_develop_depart_id,date(open_date) as open_day,left(open_date,7) as open_month
+        from AI_A_U_360_ALL_VIEW_D
+        where op_time=to_char(now()-1,'YYYYMMDD')
+		and left(open_date,10)>='2020-06-01'
+        and user_develop_depart_id2=103017360278
+		and main_prod_id2 in(10,11)
+        and user_develop_depart_id in (103026062295,500000033216,500000060296,103026319617,500000051061,103022669856,103026319618,500000101828,
+								   103017931514,500000065575,500000065577,103016760280,500000017159,500000072846,500000059857,500000109411,
+								   500000023425,103023293276,500000082878,500000076784,500000097237,500000099566,500000099545,500000098386)
+        and main_pp_id in(811006815,811012642,811012644,811013183,811013184,811014714,811014716,811014715)
+		and user_sts_id=100000)t1
+    left join(
+        select c.user_id,c.price_plan_cd
+        from(
+            select b.*,row_number() OVER(partition by user_id order by create_day) as row_num
+            from(
+                select distinct user_id,price_plan_cd,date(create_dt) as create_day
+                from AI_A_U_USER_PRICE_D
+                where price_plan_cd in(811012894,811012893,811013559,811013557,811014546,811014547,811014592,811014680,811014679,811014680,811014842,811015634,811014548)
+                and op_time=to_char(now()-1,'YYYYMMDD'))b)c
+        where c.row_num=1)t2
+    on t1.user_id=t2.user_id
+	left join(
+        select f.user_id,f.price_plan_cd
+        from(
+            select e.*,row_number() OVER(partition by user_id order by create_day) as row_num
+            from(
+                select distinct user_id,price_plan_cd,date(create_dt) as create_day
+                from AI_A_U_USER_PRICE_D
+                where price_plan_cd in(811013361,811014500,811014548,811013360,811015639)
+                and op_time=to_char(now()-1,'YYYYMMDD'))e)f
+        where f.row_num=1)t5
+    on t1.user_id=t5.user_id)t3)t4;
